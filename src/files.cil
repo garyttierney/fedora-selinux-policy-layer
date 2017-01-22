@@ -1,0 +1,60 @@
+(block files
+	(typeattribute all)
+	(typeattributeset all file_type)
+	(typeattribute all_executables)
+	(typeattributeset all_executables exec_type)
+	(typeattribute all_entrypoints)
+	(typeattributeset all_entrypoints entry_type)
+	(typeattribute all_config_data)
+	(typeattributeset all_config_data configfile)
+	(typeattribute all_runtime_data)
+	(typeattributeset all_runtime_data pidfile)
+
+	; A template for generic files.
+	(block template
+		(blockabstract template)
+		(type obj)
+		(roletype object_r obj)
+		(typeattributeset file_type obj)
+	)
+	
+	; A template for executable files,
+	; which are executable but not entrypoints
+	; with a type transition.
+	(block executable_template
+		(blockabstract executable_template)
+		(blockinherit template)
+		(typeattributeset exec_type obj)
+	)
+	
+	; A template for entrypoint files, which
+	; have type transitions to another type.
+	(block entrypoint_template
+		(blockabstract entrypoint_template)
+		(blockinherit executable_template)
+		(typeattributeset entry_type obj)
+	)
+	
+	; A template namespace for configuration data,
+	; typically stored in /etc/
+	(block config_data_template
+		(blockabstract config_data_template)
+		(blockinherit template)
+		(typeattributeset configfile obj)
+	)
+	
+	; A template for runtime data, i.e., pidfiles
+	; under /var/run
+	(block runtime_data_template
+		(blockabstract runtime_data_template)
+		(blockinherit template)
+		(typeattributeset pidfile obj)
+	)
+
+	(block log_data_template
+		(blockabstract log_data_template)
+		(blockinherit template)
+		(typeattributeset logfile obj)
+		(allow obj tmpfs_t (filesystem (associate)))
+	)
+)

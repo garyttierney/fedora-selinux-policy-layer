@@ -1,0 +1,118 @@
+(block fstree
+	(block var
+		(blockinherit template)
+		(call dir (var_t))
+	)
+
+	(block var_run
+		(blockinherit template)
+		(call parent_dir (var_t))
+		(call dir (var_run_t))
+	)
+
+	(block var_lib
+		(blockinherit template)
+		(call parent_dir (var_t))
+		(call dir (var_lib_t))
+	)
+
+	(block var_log
+		(blockinherit template)
+		(call parent_dir (var_t))
+		(call dir (var_log_t))
+	)
+
+	(block etc
+		(blockinherit template)
+		(call dir (etc_t))
+	)
+
+	(block template
+		(blockabstract template)
+		(typeattribute obj_attrib)
+		(typeattribute ancestor_obj_attrib)
+		(typeattribute parent_obj_attrib)
+		(typeattribute parents_and_ancestors_attrib)
+		(typeattributeset parents_and_ancestors_attrib
+			(and
+				(parent_obj_attrib)
+				(ancestor_obj_attrib)
+			)
+		)
+		(macro dir ((type obj_type))
+			(typeattributeset obj_attrib obj_type)
+		)
+		
+		(macro ancestor_dir ((type obj_type))
+			(typeattributeset ancestor_obj_attrib obj_type)
+		)
+
+		(macro parent_dir ((type obj_type))
+			(typeattributeset parent_obj_attrib obj_type)
+			(typeattributeset ancestor_obj_attrib obj_type)
+		)
+
+		(macro search_parents ((type subj))
+			(allow subj parents_and_ancestors_attrib
+				(
+					dirs (search)
+				)
+			)
+		)
+
+		(macro search ((type subj))
+			(call search_parents (subj))
+			(allow subj obj_attrib
+				(
+					dirs (search)
+				)
+			)
+		)
+
+		(macro read_files ((type subj) (classmap files_type))
+			(call search_parents (subj))
+			(allow subj obj_attrib
+				(
+					files_type (read)
+				)
+			)
+		)
+
+		(macro write_files ((type subj) (classmap files_type))
+			(call search_parents (subj))
+
+			(allow subj obj_attrib
+				(
+					files_type (read write)
+				)
+			)
+		)
+
+		; Allow a subject to manage
+		; the filesystem tree this template
+		; represents.
+		;
+		; @param source_subject subj
+		(macro manage ((type subj) (classmap files_type))
+			(call search_parents (subj))
+			(call read_files (subj files_type))
+			(call write_files (subj files_type))
+
+			(allow subj obj_attrib
+				(
+					files_type (manage)
+				)
+			)
+
+			(allow subj parent_obj_attrib
+				(
+					files_type (create)
+				)
+			)
+		)
+		
+		(macro transition ((type subj) (type obj) (class target_class))
+			(typetransition subj parent_obj_attrib target_class obj)
+		)
+	)
+)

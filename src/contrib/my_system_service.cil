@@ -1,0 +1,17 @@
+; Declare my_system_service's file contexts
+
+(in my_system_service
+	(filecon "/usr/bin/my-system-service" file cmd_file.ctx)
+	(filecon "/usr/local/bin/my-system-service" file cmd_file.ctx)
+	(filecon "/var/run/my-system-service(/.*)?" any runtime_data.ctx)
+	(filecon "/var/lib/my-system-service(/.*)?" any state_data.ctx)
+	(filecon "/etc/my-system-service(/.*)?" any config_data.ctx)
+)
+
+(block my_system_service
+	(blockinherit system_service.basic_template)
+
+	(optional sysadm_admin
+		(call admin_role (sysadm_r sysadm_t))
+	)
+)

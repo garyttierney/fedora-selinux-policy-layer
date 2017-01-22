@@ -1,0 +1,124 @@
+(block system_service
+	(block data_template
+		(blockabstract data_template)
+		(context ctx (system_u object_r obj ((s0) (s0))))
+	)
+
+	(block data_tree_template
+		(blockinherit fstree.template)
+
+		(macro obj_type ((type obj))
+			(call parent_dir (obj))
+			(call dir (obj))
+		)
+	)
+
+	; A template block for a basic system service
+	; which manages program state under /var/lib, creates
+	; runtime data under /var/run, reads configuration
+	; from /etc, and creates / appends to log files under
+	; /var/log.
+	(block basic_template
+		(blockabstract basic_template)
+		(blockinherit domain.template)
+		
+		(roletype system_r subj)
+		(typeattributeset daemon subj)
+
+		(call init.create_process_transition (cmd_file.obj subj))
+
+		(block runtime_data
+			(blockinherit files.runtime_data_template)
+			(blockinherit data_template)
+			
+			(block tree
+				(blockinherit data_tree_template)
+				(call obj_type (obj))
+				(call ancestor_dir (var_t))
+				(call parent_dir (var_run_t))
+			)
+		)
+
+		(block config_data
+			(blockinherit files.config_data_template)
+			(blockinherit data_template)
+
+			(block tree
+				(blockinherit data_tree_template)
+				(call obj_type (obj))
+				(call parent_dir (etc_t))
+			)
+		)
+
+		(block state_data
+			(blockinherit files.template)
+			(blockinherit data_template)
+
+			(block tree
+				(blockinherit data_tree_template)
+				(call obj_type(obj))
+				(call ancestor_dir (var_t))
+				(call parent_dir (var_lib_t))
+			)
+		)
+
+		(block log_data
+			(blockinherit files.log_data_template)
+			(blockinherit data_template)
+
+			(block tree
+				(blockinherit data_tree_template)
+				(call obj_type (obj))
+				(call ancestor_dir (var_t))
+				(call parent_dir (var_log_t))
+			)
+		)
+
+		(call config_data.tree.read_files (subj files_except_blk_and_chr))
+		
+		;; todo: make this only create and append
+		(call log_data.tree.manage (subj files_except_blk_and_chr))
+		(call log_data.tree.transition (subj log_data.obj file))
+		(call log_data.tree.transition (subj log_data.obj dir))
+		(call runtime_data.tree.manage (subj files_except_blk_and_chr))
+		(call runtime_data.tree.transition(subj runtime_data.obj dir))
+		(call runtime_data.tree.transition(subj runtime_data.obj file))
+		(call state_data.tree.manage (subj files_except_blk_and_chr))
+
+		(typeattribute data_objs)
+		(typeattributeset data_objs
+			(
+				config_data.obj
+				runtime_data.obj
+				state_data.obj
+			)
+		)
+
+		; Allow a type to administrate this
+		; system service and manage its data.
+		(macro admin ((type admin_type))
+			(allow admin_type files.all_runtime_data
+				(
+					dirs (search)
+				)
+			)
+
+			(allow admin_type data_objs
+				(
+					files (manage relabel)
+				)
+			)
+
+			(call auto_transition (admin_type))
+		)
+
+		; Allow a given role and type to administrate this
+		; system service and manage its data.
+		(macro admin_role ((role admin_role) (type admin_type))
+			(roleallow admin_role system_r)
+			(roletransition admin_role cmd_file.obj process system_r)
+
+			(call admin (admin_type))
+		)
+	)
+)

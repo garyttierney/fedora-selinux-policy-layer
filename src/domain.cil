@@ -1,0 +1,23 @@
+(block domain
+	(block template
+		(blockabstract template)
+		
+		(type subj)
+		(typeattributeset domain subj)
+		; from refpolicy: only way to get corenet_unlabeled packets disabled
+		; to work
+		(typeattributeset corenet_unlabeled_type subj)
+
+		(block cmd_file
+			(blockinherit files.entrypoint_template)
+			(context ctx (system_u object_r obj ((s0) (s0))))
+		)
+		
+		(macro auto_transition ((type src_subj))
+			(typetransition src_subj cmd_file.obj process subj)
+		)
+
+		(allow subj cmd_file.obj (file (entrypoint)))
+		(allow subj cmd_file.obj exec_file_perms)
+	)
+)
