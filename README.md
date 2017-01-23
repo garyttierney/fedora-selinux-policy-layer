@@ -50,4 +50,10 @@ TODO
 
 ## Example
 
-See: src/custom/my_system_service.cil
+There are currently some contrib modules being ported under the src/contrib
+tree, as well as an example of some basic policies under src/examples/
+
+See:
+
+* src/examples/my_system_service.cil
+* src/contrib/ircd.cil

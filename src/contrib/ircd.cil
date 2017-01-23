@@ -1,0 +1,46 @@
+(in ircd
+	(filecon "/usr/bin/ircd" file cmd_file.ctx)
+	(filecon "/usr/sbin/dancer-ircd" file cmd_file.ctx)
+	(filecon "/usr/sbin/ircd" file cmd_file.ctx)
+	(filecon "/usr/sbin/ngircd" file cmd_file.ctx)
+
+	; state data context specifications
+
+	(filecon "/var/lib/dancer-ircd(/.*)?" any state_data.ctx)
+
+	; config data context specifications
+
+	(filecon "/etc/ircd(/.*)?" any config_data.ctx)
+	(filecon "/etc/ngircd\.conf" file config_data.ctx)
+	(filecon "/etc/ngircd\.motd" file config_data.ctx)
+
+	; log data context specifications
+
+	(filecon "/var/log/ircd(/.*)?" any log_data.ctx)
+	(filecon "/var/log/ngircd\.log" file log_data.ctx)
+	(filecon "/var/log/dancer-ircd(/.*)?" any log_data.ctx)
+
+	; runtime data context specifications
+
+	(filecon "/var/run/dancer-ircd(/.*)?" any runtime_data.ctx)
+	(filecon "/var/run/ngircd(/.*)?" any runtime_data.ctx)
+
+	(portcon tcp 6667 port.ctx)
+)
+
+(block ircd
+	(blockinherit system_service.basic_network_template)
+
+	(call auth.lookup_user_info (subj))
+	(call capabilities.set_uid_and_gid (subj))
+
+	(optional sysadm_ircd_admin
+		(call admin_role (sysadm_r sysadm_t))
+	)
+
+	; Associate the ircd_port_t corenetwork
+	; port with this service if it's available.
+	(optional corenetwork_ircd_port
+		(call port.port_type (ircd_port_t))
+	)
+)

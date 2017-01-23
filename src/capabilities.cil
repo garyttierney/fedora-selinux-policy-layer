@@ -1,0 +1,5 @@
+(block capabilities
+	(macro set_uid_and_gid ((type src_subj))
+		(allow src_subj self (capability (setuid setgid)))
+	)
+)

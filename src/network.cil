@@ -1,0 +1,122 @@
+(block network
+	(typealias generic_interface)
+	(typealiasactual generic_interface netif_t)
+
+	(typealias generic_node)
+	(typealiasactual generic_node node_t)
+
+	(block port
+		(macro bind ((type src_subj) (type port_obj))
+			(allow src_subj port_obj (tcp_socket (name_bind)))
+			(dontaudit src_subj defined_port_type (tcp_socket (name_bind)))
+		)
+
+		(macro connect ((type src_subj) (type port_obj))
+			(allow src_subj port_obj (tcp_socket (name_connect)))
+		)
+
+		(macro receive ((type src_subj) (type port_obj))
+			(allow src_subj port_obj (tcp_socket (recv_msg)))
+		)
+
+		(macro send ((type src_subj) (type port_obj))
+			(allow src_subj port_obj (tcp_socket (send_msg)))
+		)
+
+		(macro send_receive ((type src_subj) (type port_obj))
+			(call send (src_subj port_obj))
+			(call receive (src_subj port_obj))
+		)
+	)
+
+	(block port_template
+		(blockabstract port_template)
+
+		(type obj)
+		(roletype object_r obj)
+
+		(typeattribute port_objs)
+		(typeattributeset port_objs obj)
+		
+		(typeattribute interface_objs)
+		(typeattribute node_objs)
+		
+		(typeattributeset port_type obj)
+
+		(context ctx (system_u object_r obj ((s0) (s0))))
+
+		(macro bind ((type src_subj))
+			(call network.port.bind (src_subj port_objs))
+		)
+
+		(macro connect ((type src_subj))
+			(call network.port.connect (src_subj port_objs))
+		)
+
+		(macro receive ((type src_subj))
+			(call network.port.receive (src_subj port_objs))
+			(call network.interface.receive (src_subj interface_objs))
+			(call network.node.receive (src_subj node_objs))
+		)
+
+		(macro send ((type src_subj))
+			(call network.port.send (src_subj port_objs))
+			(call network.interface.send (src_subj interface_objs))
+			(call network.node.send (src_subj node_objs))
+		)
+
+		(macro send_receive ((type src_subj))
+			(call network.port.send_receive (src_subj port_objs))
+			(call network.interface.send_receive (src_subj interface_objs))
+			(call network.node.send_receive (src_subj node_objs))
+		)
+
+		; Associate an existing port type with
+		; this template, for corenetwork support.
+		(macro port_type ((type port_obj))
+			(typeattributeset port_objs port_obj)
+		)
+	)
+
+	; A generic port template block
+	; for port objects which associated subjects
+	; are able to send / receive messages on generic
+	; network nodes / interfaces with.
+	(block generic_port_template
+		(blockabstract generic_port_template)
+		(blockinherit port_template)
+
+		(typeattributeset node_objs generic_node)
+		(typeattributeset interface_objs generic_interface)
+	)
+
+	(block node
+		(macro receive ((type src_subj) (type node_obj))
+			(allow src_subj node_obj (node (tcp_recv recvfrom)))
+		)
+
+		(macro send ((type src_subj) (type node_obj))
+			(allow src_subj node_obj (node (tcp_send sendto)))
+		)
+
+		(macro send_receive ((type src_subj) (type node_obj))
+			(call receive (src_subj node_obj))
+			(call send (src_subj node_obj))
+		)
+	)
+
+	(block interface
+		(macro receive ((type src_subj) (type interface_obj))
+			(allow src_subj interface_obj (netif (tcp_recv ingress)))
+		)
+
+		(macro send ((type src_subj) (type interface_obj))
+			(allow src_subj interface_obj (netif (tcp_send egress)))
+		)
+
+		(macro send_receive ((type src_subj) (type interface_obj))
+			(call receive (src_subj interface_obj))
+			(call send (src_subj interface_obj))
+		)
+	)
+)

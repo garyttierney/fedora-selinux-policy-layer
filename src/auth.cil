@@ -1,0 +1,8 @@
+(block auth
+	
+	; Allow a subject to lookup user information from
+	; /etc/passwd
+	(macro lookup_user_info ((type src_subj))
+		(typeattributeset nsswitch_domain src_subj)
+	)
+)

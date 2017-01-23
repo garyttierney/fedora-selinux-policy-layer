@@ -121,4 +121,21 @@
 			(call admin (admin_type))
 		)
 	)
+
+	; A template block for a basic system service
+	; which also binds tcp sockets and listens
+	; for incoming connections.
+	(block basic_network_template
+		(blockabstract basic_network_template)
+		(blockinherit basic_template)
+
+		(block port
+			(blockinherit network.generic_port_template)
+		)
+
+		(call port.bind (subj))
+		(call port.send_receive (subj))
+
+		(allow subj self (tcp_socket (listen accept)))
+	)
 )

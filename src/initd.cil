@@ -5,6 +5,7 @@
 	(macro create_process_transition ((type cmd_file) (type new_type))
 		(typeattributeset direct_init_entry cmd_file)
 		(typetransition process cmd_file process new_type)
+
 		(allow process new_type
 			(
 				process (transition)
